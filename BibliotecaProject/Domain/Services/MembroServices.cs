@@ -1,6 +1,7 @@
 ﻿using BibliotecaProject.Domain.Entities;
 using BibliotecaProject.Domain.Interfaces;
 using BibliotecaProject.Infrastructure.Data;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,8 +15,9 @@ namespace BibliotecaProject.Domain.Services
         {
             _context = context;
         }
+
         public async Task<ActionResult<Membro>> Post(Membro membro)
-        {  
+        {
             //Tenho que colocar primeiramente os livros emprestado para os membros
             var membros = new Membro()
             {
@@ -39,6 +41,7 @@ namespace BibliotecaProject.Domain.Services
             {
                 return new NotFoundResult();
             }
+
             return membro;
         }
 
@@ -50,12 +53,27 @@ namespace BibliotecaProject.Domain.Services
             {
                 return new NotFoundResult();
             }
+
             input.IdMembro = membroId;
             membro.Update(input);
             await _context.SaveChangesAsync();
             return membro;
         }
 
+        public async Task<ActionResult> Delete(string id)
+        {
+            var membroId = Guid.Parse(id);
+            var membro = await _context.Membros.SingleOrDefaultAsync(x => x.IdMembro == membroId);
+            if (membro == null)
+            {
+                return new NotFoundResult();
+            }
+
+            membro.Delete();
+            _context.Membros.Remove(membro);
+            await _context.SaveChangesAsync();
+            return new NoContentResult();
+        }
     }
 }
 

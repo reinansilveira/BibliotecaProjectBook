@@ -15,6 +15,8 @@ namespace BibliotecaProject.Domain.Entities
         public string Telefone { get; set; }
 
         public string Email { get; set; }
+        
+        public bool Deletado { get; set; }
 
         //public List<HistoricoEmprestimos> HistoricoEmprestimos { get; set; }
 
@@ -32,6 +34,12 @@ namespace BibliotecaProject.Domain.Entities
            DataNascimento = dataNascimento;
            Telefone = telefone;
            Email = email;
+
+        }
+
+        public void Delete()
+        {
+            Deletado = false;
 
         }
     }

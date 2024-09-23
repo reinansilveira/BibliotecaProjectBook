@@ -1,11 +1,12 @@
 ﻿using BibliotecaProject.Domain.Entities;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BibliotecaProject.Domain.Interfaces
 {
     public interface IEmprestimo
     {
-        Task<ActionResult<Emprestimo>> Post(Emprestimo emprestimo);
+        Task<ActionResult<Emprestimo>> Post(Emprestimo emprestimo, IValidator<Emprestimo> validator);
 
         Task<ActionResult<Emprestimo>> GetById(string id);
 

@@ -10,5 +10,6 @@ namespace BibliotecaProject.Domain.Interfaces
         Task<ActionResult<Membro>> GetById(string id);
 
         Task<ActionResult<Membro>> Update(string id, Membro input);
+        Task<ActionResult> Delete(string id);
     }
 }

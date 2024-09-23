@@ -23,27 +23,31 @@ namespace BibliotecaProject.Presentation.Controllers
          [HttpGet("{id}")]
          public async Task<ActionResult> GetById(string id)
          {
-            return Ok(await _livroInterface.GetById(id));
-        }
+             var getLivro = await _livroInterface.GetById(id);
+            return Ok (getLivro);
+         }
         
 
         [HttpPost]
         public async Task<ActionResult<Livro>> Post(Livro livro)
         {
-            return Ok(await _livroInterface.Post(livro));
+              var postLivro = await _livroInterface.Post(livro);
+              return Ok(postLivro);
         }
 
 
          [HttpPut("id")]
          public async Task<ActionResult> Update(string id, Livro input)
          {
-            return Ok(await _livroInterface.Update(id, input));
+            var updatedLivro = await _livroInterface.Update(id, input);
+            return Ok(updatedLivro);
          }
 
          [HttpDelete("id")]
          public async Task<ActionResult> Delete(string id)
          {
-            return await _livroInterface.Delete(id);
+           var deleteLivro = await _livroInterface.Delete(id);
+            return deleteLivro;
          }
      }
     }

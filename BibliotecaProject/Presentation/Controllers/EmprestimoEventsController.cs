@@ -1,6 +1,7 @@
 ﻿using BibliotecaProject.Domain.Entities;
 using BibliotecaProject.Domain.Interfaces;
-using Microsoft.AspNetCore.Http;
+using BibliotecaProject.Exceptions;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BibliotecaProject.Presentation.Controllers
@@ -19,27 +20,62 @@ namespace BibliotecaProject.Presentation.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult> GetById( string id)
         {
-            return Ok(await _emprestimoInterface.GetById(id));
+            try
+            {
+                var emprestimoGet = await _emprestimoInterface.GetById(id);
+                return Ok(emprestimoGet);
+            }
+            catch (NotFoundException exception)
+            {
+                return StatusCode(exception.StatusCode,exception.Message);
+            }
+            
         }
 
 
         [HttpPost]
-        public async Task<ActionResult<Emprestimo>> Post( Emprestimo emprestimo)
+        public async Task<ActionResult<Emprestimo>> DateEmprestimo( Emprestimo emprestimo, IValidator<Emprestimo> validator)
         {
-            return Ok(await _emprestimoInterface.Post(emprestimo));
+            try
+            {
+                var emprestimoPost = await _emprestimoInterface.Post(emprestimo, validator);
+                return Ok(emprestimoPost);
+            }
+            catch (NotFoundException exception)
+            {
+                return StatusCode(exception.StatusCode, exception.Message);
+            }
+            
         }
 
 
         [HttpPut("id")]
         public async Task<ActionResult> Update(string id, Emprestimo input)
         {
-            return Ok(await _emprestimoInterface.Update(id, input));
+            try
+            {
+                var emprestimoUpdate = await _emprestimoInterface.Update(id, input);
+                return Ok(emprestimoUpdate);
+            }
+            catch (NotFoundException exception)
+            {
+              return StatusCode(exception.StatusCode, exception.Message);  
+            }
+            
         }
 
         [HttpDelete("id")]
         public async Task<ActionResult> Emprestado(string id)
         {
-            return await _emprestimoInterface.Emprestado(id);
+            try
+            {
+                var emprestimoDelete = await _emprestimoInterface.Emprestado(id);
+                return emprestimoDelete;
+            }
+            catch (NotFoundException exception)
+            {
+                return StatusCode(exception.StatusCode, exception.Message);
+            }
         }
     }
 }

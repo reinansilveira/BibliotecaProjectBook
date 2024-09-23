@@ -1,12 +1,15 @@
+using BibliotecaProject.Domain.Entities;
 using BibliotecaProject.Domain.Interfaces;
 using BibliotecaProject.Domain.Services;
 using BibliotecaProject.Infrastructure.Data;
+using BibliotecaProject.Presentation.Controllers;
+using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 
 // Add services to the container.
-
+builder.Services.AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<EmprestimoUsuarioValidator>());
 builder.Services.AddScoped<Ilivro, LivroServices>();
 builder.Services.AddScoped<IMembro, MembroServices>();
 builder.Services.AddScoped<IEmprestimo, EmprestimoServices>();

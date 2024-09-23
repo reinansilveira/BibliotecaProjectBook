@@ -1,4 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using BibliotecaProject.Domain.Services;
+using BibliotecaProject.Presentation.Controllers;
+using FluentValidation;
 
 namespace BibliotecaProject.Domain.Entities
 {
@@ -23,7 +26,7 @@ namespace BibliotecaProject.Domain.Entities
             DataEmprestimo = input.DataEmprestimo;
             DataDevolucao = input.DataDevolucao;
         }
-
+      
         internal void Update (DateTime dataEmprestimo, DateTime dataDevolução) 
         {
             DataEmprestimo = dataEmprestimo;
@@ -36,4 +39,5 @@ namespace BibliotecaProject.Domain.Entities
         }
 
     }
+    
 }
