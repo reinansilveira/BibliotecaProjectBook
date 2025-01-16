@@ -1,4 +1,7 @@
-﻿using BibliotecaProject.Domain.Entities;
+﻿
+using BibliotecaProject.Domain.Entities;
+using BibliotecaProject.Domain.EntitiesDTO;
+using BibliotecaProject.Domain.Factory;
 using BibliotecaProject.Domain.Interfaces;
 using BibliotecaProject.Infrastructure.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -10,28 +13,39 @@ namespace BibliotecaProject.Domain.Services
     public class LivroServices : Ilivro
     {
         private readonly BibliotecaDbContext _context;
-
+        
         public LivroServices(BibliotecaDbContext context)
         {
             _context = context;
+            
         }
 
 
-        public async Task<ActionResult<Livro>> Post(Livro livro)
+        public async Task<ActionResult<LivroDTO>> Post(LivroDTO livroDto)
         {
-
-            var livros = new Livro()
-            {
-                Id = Guid.NewGuid(),
-                NomeLivro = livro.NomeLivro,
-                Autor = livro.Autor,
-                DescricaoLivro = livro.DescricaoLivro,
-                DataCriacao = livro.DataCriacao
-            };
-
-            _context.Livros.Add(livros);
+            var criarLivro = 
+                new Livro
+                {
+                    Id = Guid.NewGuid(),
+                    NomeLivro = livroDto.NomeLivro,
+                    Autor = livroDto.Autor,
+                    DescricaoLivro = livroDto.DescricaoLivro,
+                    DataCriacao = livroDto.DataCriacao,
+                    LivroDeletado = false
+                };
+            _context.Livros.Add(criarLivro); 
             await _context.SaveChangesAsync();
-            return livros;
+            
+            var livroDTO = 
+                new LivroDTO
+                {
+                    Autor = criarLivro.Autor, 
+                    NomeLivro = criarLivro.NomeLivro,
+                    DescricaoLivro = criarLivro.DescricaoLivro,
+                    DataCriacao = criarLivro.DataCriacao, 
+                    LivroDeletado = criarLivro.LivroDeletado
+                }; 
+            return livroDTO;
         }
 
          public async Task<ActionResult<Livro>> GetById(string id)
@@ -72,5 +86,7 @@ namespace BibliotecaProject.Domain.Services
             await _context.SaveChangesAsync();
             return new NoContentResult();
         }
+
+      
     }
 }

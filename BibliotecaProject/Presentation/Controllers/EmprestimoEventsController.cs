@@ -34,11 +34,11 @@ namespace BibliotecaProject.Presentation.Controllers
 
 
         [HttpPost]
-        public async Task<ActionResult<Emprestimo>> DateEmprestimo( Emprestimo emprestimo, IValidator<Emprestimo> validator)
+        public async Task<ActionResult<Emprestimo>> Post( Emprestimo emprestimo)
         {
             try
             {
-                var emprestimoPost = await _emprestimoInterface.Post(emprestimo, validator);
+                var emprestimoPost = await _emprestimoInterface.Post(emprestimo);
                 return Ok(emprestimoPost);
             }
             catch (NotFoundException exception)
