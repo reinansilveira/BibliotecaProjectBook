@@ -12,6 +12,8 @@ namespace BibliotecaProject.Infrastructure.Data
         public DbSet<Emprestimo> Emprestimos { get; set; }
         public DbSet<Livro> Livros { get; set; }
         public DbSet<Membro> Membros { get; set; }
+        
+        public DbSet<BlackList> BlackLists { get; set; }
 
     }
 }

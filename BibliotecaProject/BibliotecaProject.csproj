@@ -21,11 +21,16 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Quartz" Version="3.13.0" />
+    <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.13.0" />
+    <PackageReference Include="Quartz.Extensions.Hosting" Version="3.13.0" />
+    <PackageReference Include="SendGrid" Version="9.29.3" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Application\Dtos\" />
+    <Folder Include="Infrastructure\Mapper\" />
     <Folder Include="Infrastructure\Repositories\" />
     <Folder Include="Migrations\" />
     <Folder Include="Presentation\ViewModels\" />
@@ -40,12 +45,69 @@
     <Compile Remove="Migrations\20240825194900_UpdateMembroPropertyType.Designer.cs" />
     <Compile Remove="Migrations\BibliotecaDbContextModelSnapshot.cs" />
     <Compile Remove="Domain\Entities\HistoricoEmprestimos.cs" />
+    <Compile Remove="Exceptions\ExceptionFilter.cs" />
+    <Compile Remove="Exceptions\ErrorOnValidatorException.cs" />
+    <Compile Remove="Exceptions\ResponseErrors.cs" />
+    <Compile Remove="Presentation\Controllers\EmprestimoUsuarioValidator.cs" />
+    <Compile Remove="Migrations\20240831214608_MigrationsNovoBanco.Designer.cs" />
+    <Compile Remove="Migrations\20240831214608_MigrationsNovoBanco.cs" />
+    <Compile Remove="Domain\Services\TesteBlackList.cs" />
+    <Compile Remove="Migrations\20241008202602_BlackListBoot.cs" />
+    <Compile Remove="Migrations\20241008202602_BlackListBoot.Designer.cs" />
+    <Compile Remove="Migrations\20241008203100_CreateBlackListTable.cs" />
+    <Compile Remove="Migrations\20241008203100_CreateBlackListTable.Designer.cs" />
+    <Compile Remove="Migrations\20241008203356_InitialMigration.cs" />
+    <Compile Remove="Migrations\20241008203356_InitialMigration.Designer.cs" />
+    <Compile Remove="Migrations\20241008203406_RecreateModelSnapshot.cs" />
+    <Compile Remove="Migrations\20241008203406_RecreateModelSnapshot.Designer.cs" />
+    <Compile Remove="Migrations\20241008204129_NovaBlackListMigration.cs" />
+    <Compile Remove="Migrations\20241008204129_NovaBlackListMigration.Designer.cs" />
+    <Compile Remove="Migrations\20241017184012_AddBlackListTable.Designer.cs" />
+    <Compile Remove="Migrations\20241017184012_AddBlackListTable.cs" />
+    <Compile Remove="Presentation\Controllers\TesteBlackList.cs" />
+    <Compile Remove="Migrations\20241017190652_NomeDaMigracao.cs" />
+    <Compile Remove="Migrations\20241017190652_NomeDaMigracao.Designer.cs" />
+    <Compile Remove="Migrations\20241017184214_AddBlackListTable.Designer.cs" />
+    <Compile Remove="Migrations\20241017184214_AddBlackListTable.cs" />
+    <Compile Remove="Presentation\Controllers\TesteControllerBlackList.cs" />
+    <Compile Remove="Migrations\20241017194107_AdicionarColunaIdBlackList.cs" />
+    <Compile Remove="Migrations\20241017194107_AdicionarColunaIdBlackList.Designer.cs" />
+    <Compile Remove="Domain\RegistroUsuarioValidator\ValidatorMembro.cs" />
+    <Compile Remove="Presentation\Controllers\EmailController.cs" />
+    <Compile Remove="Domain\Services\TesteEmail.cs" />
+    <Compile Remove="Domain\Services\NovoTeste.cs" />
+    <Compile Remove="Domain\Services\EnviarEmail.cs" />
+    <Compile Remove="Domain\Services\CriptografiaSenha.cs" />
+    <Compile Remove="Validator.Tests\**" />
+    <Compile Remove="Test\**" />
+    <Compile Remove="Infrastructure\Mapper\AutoMapperProfile.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="..\.dockerignore">
       <Link>.dockerignore</Link>
     </Content>
+    <Content Remove="Validator.Tests\**" />
+    <Content Remove="Test\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Remove="Validator.Tests\**" />
+    <EmbeddedResource Remove="Test\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Validator.Tests\**" />
+    <None Remove="Test\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="Validator.Tests\obj\project.assets.json" />
+    <_ContentIncludedByDefault Remove="Validator.Tests\obj\project.packagespec.json" />
+    <_ContentIncludedByDefault Remove="Validator.Tests\obj\Validator.Tests.csproj.nuget.dgspec.json" />
+    <_ContentIncludedByDefault Remove="Test\obj\project.assets.json" />
+    <_ContentIncludedByDefault Remove="Test\obj\project.packagespec.json" />
+    <_ContentIncludedByDefault Remove="Test\obj\Test.csproj.nuget.dgspec.json" />
   </ItemGroup>
 
 </Project>

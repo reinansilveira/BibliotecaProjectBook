@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics.Eventing.Reader;
+using BibliotecaProject.Domain.EntitiesDTO;
 
 namespace BibliotecaProject.Presentation.Controllers
 {
@@ -29,9 +30,9 @@ namespace BibliotecaProject.Presentation.Controllers
         
 
         [HttpPost]
-        public async Task<ActionResult<Livro>> Post(Livro livro)
+        public async Task<ActionResult<LivroDTO>> Post(LivroDTO livroDto)
         {
-              var postLivro = await _livroInterface.Post(livro);
+              var postLivro = await _livroInterface.Post(livroDto);
               return Ok(postLivro);
         }
 

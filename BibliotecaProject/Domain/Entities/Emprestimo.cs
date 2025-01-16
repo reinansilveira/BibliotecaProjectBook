@@ -19,6 +19,7 @@ namespace BibliotecaProject.Domain.Entities
         public DateTime DataDevolucao { get; set; }  //7 dias para fazer a devolução.
 
         public bool StatusEmprestimo { get; set; }
+       
 
 
         public void Update (Emprestimo input) 

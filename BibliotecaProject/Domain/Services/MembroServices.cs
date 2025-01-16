@@ -1,5 +1,10 @@
-﻿using BibliotecaProject.Domain.Entities;
+﻿using System.Collections;
+using System.Runtime.InteropServices.JavaScript;
+using BibliotecaProject.Domain.Entities;
+using BibliotecaProject.Domain.Factory;
 using BibliotecaProject.Domain.Interfaces;
+using BibliotecaProject.Domain.RegistroUsuarioValidator;
+using BibliotecaProject.Exceptions;
 using BibliotecaProject.Infrastructure.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -15,21 +20,25 @@ namespace BibliotecaProject.Domain.Services
         {
             _context = context;
         }
-
+        
         public async Task<ActionResult<Membro>> Post(Membro membro)
         {
-            //Tenho que colocar primeiramente os livros emprestado para os membros
-            var membros = new Membro()
-            {
-                IdMembro = Guid.NewGuid(),
-                Nome = membro.Nome,
-                DataNascimento = membro.DataNascimento,
-                Telefone = membro.Telefone,
-                Email = membro.Email
-            };
-            _context.Membros.Add(membros);
+            
+                var validator = new RegisteUserValidator();
+                var result = validator.Validate(membro);
+            
+                if (result.IsValid == false)
+                {
+                    var errorMessages = result.Errors.Select(e => e.ErrorMessage);
+                    throw new NotFoundException(400, "Nome Vazio ou e-mail invalido.");
+                }
+       
+            
+           var criarMembros = MembroFactory.CriarMembro(membro);
+            
+            _context.Membros.Add(criarMembros);
             await _context.SaveChangesAsync();
-            return membros;
+            return membro;
         }
 
         public async Task<ActionResult<Membro>> GetById(string id)
@@ -60,6 +69,10 @@ namespace BibliotecaProject.Domain.Services
             return membro;
         }
 
+        private void Validate(Membro membro)
+        {
+            
+        }
         public async Task<ActionResult> Delete(string id)
         {
             var membroId = Guid.Parse(id);

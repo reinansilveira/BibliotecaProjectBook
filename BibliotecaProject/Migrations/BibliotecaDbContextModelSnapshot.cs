@@ -22,6 +22,24 @@ namespace BibliotecaProject.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("BibliotecaProject.Domain.Entities.BlackList", b =>
+                {
+                    b.Property<Guid>("IdBlackList")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("IdMembro")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("IdBlackList");
+
+                    b.ToTable("BlackLists");
+                });
+
             modelBuilder.Entity("BibliotecaProject.Domain.Entities.Emprestimo", b =>
                 {
                     b.Property<Guid>("EmprestimoId")
@@ -94,6 +112,10 @@ namespace BibliotecaProject.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Senha")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

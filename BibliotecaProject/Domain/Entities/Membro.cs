@@ -8,13 +8,15 @@ namespace BibliotecaProject.Domain.Entities
         [Key]
         public Guid IdMembro { get; set; }
 
-        public string Nome { get; set; }
+        public string Nome { get; set; } = string.Empty;
 
         public DateTime DataNascimento { get; set; }
 
-        public string Telefone { get; set; }
+        public string Telefone { get; set; } = string.Empty;
 
-        public string Email { get; set; }
+        public string Email { get; set; } = string.Empty;
+        
+        public string Senha { get; set; } = string.Empty;
         
         public bool Deletado { get; set; }
 
@@ -28,12 +30,13 @@ namespace BibliotecaProject.Domain.Entities
             Email = input.Email;
         }
 
-        internal void Update(DateTime dataNascimento, string nome, string telefone, string email)
+        internal void Update(DateTime dataNascimento, string nome, string telefone, string email, string senha)
         {
            Nome = nome;
            DataNascimento = dataNascimento;
            Telefone = telefone;
            Email = email;
+           Senha = senha;
 
         }
 
