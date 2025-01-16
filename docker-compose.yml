@@ -1,0 +1,17 @@
+version: '3.8'  # Versão do Docker Compose
+
+services:       # Definição dos serviços
+  app:          # Nome do serviço
+    image: myapp:latest  # Imagem Docker a ser utilizada
+    build:       # Diretório para construir a imagem
+      context: .
+    ports:       # Mapeamento de portas
+      - "8080:80"
+    environment:  # Variáveis de ambiente
+      - ENV=production
+    volumes:      # Montagem de volumes
+      - ./app:/usr/src/app
+ # Persistência de dados
+
+volumes:        # Definição de volumes
+  db_data:      # Nome do volume
