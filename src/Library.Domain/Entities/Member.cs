@@ -43,14 +43,33 @@ public class Member
 
     public Role Role { get; private set; }
 
+    public DateTime? EmailConfirmedAt { get; private set; }
+
     public bool IsDeleted { get; private set; }
+
+    public bool IsEmailConfirmed => EmailConfirmedAt.HasValue;
 
     public void Update(string name, DateTime birthDate, string phone, string email)
     {
+        if (!string.Equals(Email, email, StringComparison.Ordinal))
+        {
+            EmailConfirmedAt = null;
+        }
+
         Name = name;
         BirthDate = birthDate;
         Phone = phone;
         Email = email;
+    }
+
+    public void ConfirmEmail(DateTime now)
+    {
+        EmailConfirmedAt ??= now;
+    }
+
+    public void ChangePassword(string passwordHash)
+    {
+        PasswordHash = passwordHash;
     }
 
     public void Delete()

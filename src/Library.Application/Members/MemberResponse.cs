@@ -7,4 +7,5 @@ public sealed record MemberResponse(
     string Phone,
     string Email,
     string Role,
+    bool EmailConfirmed,
     DateTime CreatedAt);

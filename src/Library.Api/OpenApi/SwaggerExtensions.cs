@@ -16,8 +16,8 @@ public static class SwaggerExtensions
             {
                 Title = "Library Management API",
                 Version = "v1",
-                Description = "Books, members and loans with an automatic blacklist for overdue returns. " +
-                              "Sign in at /api/auth/login and click Authorize to send the JWT."
+                Description = "Catalog with printed copies and e-books, loans, waiting lists, fines, reviews and real-time notifications. " +
+                              "Sign in at /api/v1/auth/login and click Authorize to send the JWT."
             });
 
             options.AddSecurityDefinition(SchemeName, new OpenApiSecurityScheme

@@ -8,5 +8,6 @@ public sealed class CreateLoanRequestValidator : AbstractValidator<CreateLoanReq
     {
         RuleFor(loan => loan.BookId).NotEmpty();
         RuleFor(loan => loan.MemberId).NotEmpty();
+        RuleFor(loan => loan.Format).IsInEnum();
     }
 }

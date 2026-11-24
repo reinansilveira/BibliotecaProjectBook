@@ -4,7 +4,7 @@
 |---|---|---|---|
 | Unit | `tests/Library.UnitTests` | xUnit v3, NSubstitute, Bogus, `FakeTimeProvider` | No |
 | Architecture | `tests/Library.ArchitectureTests` | NetArchTest | No |
-| Integration | `tests/Library.IntegrationTests` | `WebApplicationFactory`, Testcontainers (SQL Server, RabbitMQ) | Yes |
+| Integration | `tests/Library.IntegrationTests` | `WebApplicationFactory`, Testcontainers (SQL Server with full-text, RabbitMQ), SignalR client | Yes |
 | Load | `tests/load` | k6 | Yes (to run the API) |
 
 Run everything except the load test:
@@ -19,16 +19,14 @@ Run a single suite:
 dotnet test --project tests/Library.UnitTests
 ```
 
-## Unit tests (81)
+## Unit tests (216)
 
-- **Domain**: loan period and overdue rules, returning twice, refresh token expiry and revocation, member defaults.
-- **Services**: every loan rule (blacklist, one active loan per member, book already on loan, not found cases), blacklist refresh without duplicates, soft deletes, email normalization and duplicates.
-- **Events**: each use case publishes the expected integration event, and nothing is published when a rule fails.
-- **Authentication**: login, refresh token rotation, reuse detection revoking every session, expiration, logout.
-- **Notifications**: each event produces the right email.
-- **Infrastructure**: PBKDF2 hashing, JWT claims and signature, routing keys, event serialization, outbox retry bookkeeping.
+- **Domain**: printed and e-book loan periods, overdue and expiry rules, rounding of days overdue, renewals, reading progress, reservation states and hold expiry, fine amounts and settlement, review ratings, single-use tokens, e-book licenses, email confirmation.
+- **Services**: borrowing inside a book lock, free capacity with ready holds, a ready reservation taking the held copy, standing (overdue loans, unpaid fines, loan limit), late returns issuing fines, returns promoting the next member, renewals blocked by a waiting list, reservation rules, fines, reviews and rating refresh, password reset and email confirmation links, ISBN import, e-book upload and Gutenberg import, maintenance (expirations, holds, reminders, notices), wishlist, catalog cache usage.
+- **Common**: ISBN check digits, CSV escaping (including spreadsheet formula injection), e-book type detection by magic bytes, reviewer display names.
+- **Infrastructure**: signed links, full-text condition building, Open Library mapping with a stub HTTP handler, HybridCache invalidation by tag, JWT, PBKDF2, routing keys for every event, outbox retry bookkeeping.
 
-The clock is controlled with `FakeTimeProvider`, so tests can move time forward instead of waiting.
+The clock is controlled with `FakeTimeProvider`, so tests move time forward instead of waiting.
 
 ## Architecture tests (12)
 
@@ -36,19 +34,20 @@ The clock is controlled with `FakeTimeProvider`, so tests can move time forward 
 - Application depends on neither Infrastructure nor the API, nor on EF Core, ASP.NET Core, Dapper, RabbitMQ or SendGrid.
 - Infrastructure does not depend on the API.
 - Controllers inherit `ControllerBase`, end with `Controller` and never touch the database directly.
-- Application services are sealed and implement a matching interface; repository contracts are interfaces and their implementations live in Infrastructure.
+- Application services are sealed and implement a matching interface; repository contracts are interfaces implemented in Infrastructure.
 
-## Integration tests (33)
+## Integration tests (59)
 
-The API runs in memory with `WebApplicationFactory`, connected to **real SQL Server and RabbitMQ containers** started by Testcontainers. The containers are shared by all tests through an assembly fixture and removed at the end.
+The API runs in memory with `WebApplicationFactory`, connected to **real SQL Server and RabbitMQ containers** started by Testcontainers. The SQL Server image is built from [`docker/sqlserver/Dockerfile`](../docker/sqlserver/Dockerfile) with the full-text feature, so the full-text search is tested for real. Open Library and Project Gutenberg are replaced by fakes, so the suite never depends on the internet.
 
-- **Authentication and authorization**: 401 without a token or with an invalid token, 403 when a member calls an admin endpoint or reads another member's data, token refresh, reuse detection and logout.
-- **Loan flow**: borrowing, the "book already on loan" rule, returns, history, validation errors (400), duplicates (409), not found (404).
-- **Blacklist**: a client with the clock moved 10 days forward runs the overdue check, the member is blocked, and is released after the return.
-- **SQL**: pagination and search, the Dapper ranking, and the stored procedure with a controlled scenario (March 2031: 2 loans, 1 overdue, 50%, 10 days late).
-- **Messaging**: registering a member delivers the welcome email through RabbitMQ; borrowing a book delivers the confirmation; the outbox message is marked as processed and consumed exactly once.
-- **Rate limiting**: a host with a limit of 3 returns `429` with `Retry-After` on the fourth sign-in attempt, while other endpoints stay unlimited.
-- **Hosting configuration**: the configured front end origin passes the CORS preflight and other origins do not; Swagger stays hidden outside development unless `Swagger:Enabled` is set.
+- **Authentication and authorization**: 401, 403, token rotation and reuse detection, logout, and email confirmation and password reset with the links captured from the emails delivered through RabbitMQ.
+- **Circulation**: availability from copies, two members racing for the last copy (one 201, one 422), the waiting list with positions, a late return with a shifted clock issuing a fine, the fine blocking new loans until it is paid, the hold for the first member, unclaimed holds passing to the next member, renewals and the loan limit.
+- **E-books**: multipart upload, licenses, signed download with range requests, tampered and revoked links, reading progress, early return promoting the waiting list, expiry by the maintenance job, Gutenberg import, rejected fake files.
+- **Catalog**: full-text prefix search, filters and sorting, genres, suggestions, ISBN import with duplicate detection, copies, reviews and the average rating, wishlist and "also read".
+- **Real time and admin**: SignalR notification after borrowing, unread count, anonymous hub connections rejected, audit trail with the actor, dashboard, CSV export, reading statistics, API version header.
+- **SQL, messaging and hosting**: pagination, the Dapper ranking, the stored procedure (March 2031: 2 loans, 1 overdue, 50%, 10 days late), the outbox processed exactly once, rate limiting, CORS and Swagger configuration.
+
+Tests that run the maintenance job with a shifted clock share an xUnit collection, so they never run at the same time.
 
 ## Coverage
 
@@ -60,9 +59,8 @@ dotnet reportgenerator "-reports:TestResults/*.cobertura.xml" "-targetdir:covera
 
 | Metric | Result |
 |---|---|
-| Lines | 87.8% |
-| Branches | 75.6% |
-| Methods | 92.7% |
+| Lines | 88.6% |
+| Branches | 75.3% |
 
 Generated EF Core migrations are excluded. CI uploads the HTML report as an artifact and writes the summary to the workflow page.
 
@@ -71,7 +69,7 @@ Generated EF Core migrations are excluded. CI uploads the HTML report as an arti
 The script in [`tests/load/library-load-test.js`](../tests/load/library-load-test.js) seeds 50 books and runs two scenarios for about one minute:
 
 - `catalog`: up to 30 virtual users paging through and searching the catalog.
-- `members`: 5 virtual users registering, signing in, calling `/api/auth/me` and refreshing the token.
+- `members`: 5 virtual users registering, signing in, calling `/api/v1/auth/me` and refreshing the token.
 
 Thresholds: less than 1% failed requests, catalog p95 under 300 ms, member flow p95 under 1 s.
 

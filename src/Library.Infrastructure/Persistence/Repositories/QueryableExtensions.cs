@@ -19,4 +19,18 @@ public static class QueryableExtensions
 
         return new PagedResult<T>(items, request.Page, request.PageSize, totalItems);
     }
+
+    public static async Task<PagedResult<TResult>> ToPagedResultAsync<TSource, TResult>(
+        this IOrderedQueryable<TSource> query,
+        Func<IQueryable<TSource>, IQueryable<TResult>> project,
+        PageRequest request,
+        CancellationToken cancellationToken)
+    {
+        var totalItems = await query.CountAsync(cancellationToken);
+
+        var items = await project(query.Skip((request.Page - 1) * request.PageSize).Take(request.PageSize))
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<TResult>(items, request.Page, request.PageSize, totalItems);
+    }
 }

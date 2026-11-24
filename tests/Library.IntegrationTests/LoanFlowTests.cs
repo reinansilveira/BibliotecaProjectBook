@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using Library.Application.Blacklist;
 using Library.Application.Common.Pagination;
 using Library.Application.Loans;
 using Library.Application.Members;
@@ -28,61 +27,31 @@ public class LoanFlowTests(LibraryApiFactory factory) : ApiTestBase(factory)
         var (member, _, memberClient) = await RegisterAndSignInAsync();
         var (otherMember, _, otherClient) = await RegisterAndSignInAsync();
 
-        var create = await memberClient.PostAsJsonAsync("/api/loans", new CreateLoanRequest(book.Id, member.Id), Token);
+        var create = await memberClient.PostAsJsonAsync("/api/v1/loans", new CreateLoanRequest(book.Id, member.Id), Token);
         Assert.Equal(HttpStatusCode.Created, create.StatusCode);
         var loan = (await create.Content.ReadFromJsonAsync<LoanResponse>(Token))!;
         Assert.Equal(LoanStatus.Active, loan.Status);
 
-        var duplicate = await otherClient.PostAsJsonAsync("/api/loans", new CreateLoanRequest(book.Id, otherMember.Id), Token);
+        var duplicate = await otherClient.PostAsJsonAsync("/api/v1/loans", new CreateLoanRequest(book.Id, otherMember.Id), Token);
         Assert.Equal(HttpStatusCode.UnprocessableEntity, duplicate.StatusCode);
         var problem = await duplicate.Content.ReadFromJsonAsync<ProblemDetails>(Token);
-        Assert.Equal("The book is already on loan.", problem!.Detail);
+        Assert.Equal("No copies are available right now. Join the waiting list.", problem!.Detail);
 
-        var returnByMember = await memberClient.PostAsync($"/api/loans/{loan.Id}/return", null, Token);
+        var returnByMember = await memberClient.PostAsync($"/api/v1/loans/{loan.Id}/return", null, Token);
         Assert.Equal(HttpStatusCode.Forbidden, returnByMember.StatusCode);
 
-        var returned = await admin.PostAsync($"/api/loans/{loan.Id}/return", null, Token);
+        var returned = await admin.PostAsync($"/api/v1/loans/{loan.Id}/return", null, Token);
         Assert.Equal(HttpStatusCode.OK, returned.StatusCode);
         Assert.Equal(LoanStatus.Returned, (await returned.Content.ReadFromJsonAsync<LoanResponse>(Token))!.Status);
 
-        var history = await memberClient.GetFromJsonAsync<PagedResult<LoanResponse>>($"/api/members/{member.Id}/loans", Token);
+        var history = await memberClient.GetFromJsonAsync<PagedResult<LoanResponse>>($"/api/v1/members/{member.Id}/loans", Token);
         Assert.Single(history!.Items);
-    }
-
-    [Fact]
-    public async Task Overdue_member_is_blacklisted_and_blocked()
-    {
-        var admin = await CreateAdminClientAsync();
-        var book = await CreateBookAsync(admin);
-        var otherBook = await CreateBookAsync(admin);
-        var (member, memberToken, memberClient) = await RegisterAndSignInAsync();
-
-        var create = await memberClient.PostAsJsonAsync("/api/loans", new CreateLoanRequest(book.Id, member.Id), Token);
-        var loan = (await create.Content.ReadFromJsonAsync<LoanResponse>(Token))!;
-
-        var adminToken = await GetAccessTokenAsync(LibraryApiFactory.AdminEmail, LibraryApiFactory.AdminPassword);
-        var adminLater = WithToken(Factory.CreateClientWithClockOffset(TimeSpan.FromDays(10)), adminToken);
-        var memberLater = WithToken(Factory.CreateClientWithClockOffset(TimeSpan.FromDays(10)), memberToken);
-
-        Assert.Equal(HttpStatusCode.OK, (await adminLater.PostAsync("/api/blacklist/refresh", null, Token)).StatusCode);
-
-        var blacklist = await adminLater.GetFromJsonAsync<PagedResult<BlacklistEntryResponse>>("/api/blacklist?pageSize=50", Token);
-        Assert.Contains(blacklist!.Items, entry => entry.MemberId == member.Id);
-
-        await adminLater.PostAsync($"/api/loans/{loan.Id}/return", null, Token);
-        var blocked = await memberLater.PostAsJsonAsync("/api/loans", new CreateLoanRequest(otherBook.Id, member.Id), Token);
-        Assert.Equal(HttpStatusCode.UnprocessableEntity, blocked.StatusCode);
-
-        Assert.Equal(HttpStatusCode.NoContent, (await adminLater.DeleteAsync($"/api/blacklist/{member.Id}", Token)).StatusCode);
-
-        var allowed = await memberLater.PostAsJsonAsync("/api/loans", new CreateLoanRequest(otherBook.Id, member.Id), Token);
-        Assert.Equal(HttpStatusCode.Created, allowed.StatusCode);
     }
 
     [Fact]
     public async Task Invalid_data_returns_400_with_errors_per_field()
     {
-        var response = await Anonymous.PostAsJsonAsync("/api/auth/register", new RegisterMemberRequest("", new DateTime(1990, 1, 1), "", "not-an-email", "123"), Token);
+        var response = await Anonymous.PostAsJsonAsync("/api/v1/auth/register", new RegisterMemberRequest("", new DateTime(1990, 1, 1), "", "not-an-email", "123"), Token);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
@@ -98,7 +67,7 @@ public class LoanFlowTests(LibraryApiFactory factory) : ApiTestBase(factory)
         var (member, _, _) = await RegisterAndSignInAsync();
         var request = NewMemberRequest() with { Email = member.Email.ToUpperInvariant() };
 
-        var response = await Anonymous.PostAsJsonAsync("/api/auth/register", request, Token);
+        var response = await Anonymous.PostAsJsonAsync("/api/v1/auth/register", request, Token);
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
@@ -106,7 +75,7 @@ public class LoanFlowTests(LibraryApiFactory factory) : ApiTestBase(factory)
     [Fact]
     public async Task Unknown_book_returns_404_as_problem_details()
     {
-        var response = await Anonymous.GetAsync($"/api/books/{Guid.NewGuid()}", Token);
+        var response = await Anonymous.GetAsync($"/api/v1/books/{Guid.NewGuid()}", Token);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(Token);
@@ -116,7 +85,7 @@ public class LoanFlowTests(LibraryApiFactory factory) : ApiTestBase(factory)
     [Fact]
     public async Task Password_is_never_returned()
     {
-        var response = await Anonymous.PostAsJsonAsync("/api/auth/register", NewMemberRequest(), Token);
+        var response = await Anonymous.PostAsJsonAsync("/api/v1/auth/register", NewMemberRequest(), Token);
         var json = await response.Content.ReadAsStringAsync(Token);
 
         Assert.DoesNotContain("password", json, StringComparison.OrdinalIgnoreCase);

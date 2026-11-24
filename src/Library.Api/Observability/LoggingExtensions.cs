@@ -4,6 +4,7 @@ using Serilog.Events;
 using Serilog.Formatting;
 using Serilog.Formatting.Compact;
 using Serilog.Formatting.Display;
+using Serilog.Sinks.OpenTelemetry;
 
 namespace Library.Api.Observability;
 
@@ -13,12 +14,29 @@ public static class LoggingExtensions
 
     public static WebApplicationBuilder AddStructuredLogging(this WebApplicationBuilder builder)
     {
-        builder.Services.AddSerilog((services, logger) => logger
-            .ReadFrom.Configuration(builder.Configuration)
-            .ReadFrom.Services(services)
-            .Enrich.FromLogContext()
-            .Enrich.WithProperty("Application", "Library.Api")
-            .WriteTo.Console(CreateFormatter(builder.Environment)));
+        var otlpEndpoint = builder.Configuration[TelemetryExtensions.EndpointSetting];
+
+        builder.Services.AddSerilog((services, logger) =>
+        {
+            logger
+                .ReadFrom.Configuration(builder.Configuration)
+                .ReadFrom.Services(services)
+                .Enrich.FromLogContext()
+                .Enrich.WithProperty("Application", "Library.Api")
+                .WriteTo.Console(CreateFormatter(builder.Environment));
+
+            if (string.IsNullOrWhiteSpace(otlpEndpoint))
+            {
+                return;
+            }
+
+            logger.WriteTo.OpenTelemetry(options =>
+            {
+                options.Endpoint = otlpEndpoint;
+                options.Protocol = OtlpProtocol.Grpc;
+                options.ResourceAttributes = new Dictionary<string, object> { ["service.name"] = TelemetryExtensions.ServiceName };
+            });
+        });
 
         return builder;
     }

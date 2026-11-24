@@ -13,6 +13,7 @@ namespace Library.Infrastructure.Security;
 public sealed class JwtTokenService : ITokenService
 {
     private const int RefreshTokenSizeInBytes = 64;
+    private const int OpaqueTokenSizeInBytes = 32;
 
     private readonly JwtSettings _settings;
     private readonly TimeProvider _timeProvider;
@@ -57,6 +58,13 @@ public sealed class JwtTokenService : ITokenService
         return new GeneratedRefreshToken(token, ComputeHash(token), expiresAt);
     }
 
-    public string ComputeHash(string refreshToken) =>
-        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken)));
+    public OpaqueToken GenerateOpaqueToken()
+    {
+        var token = Base64UrlEncoder.Encode(RandomNumberGenerator.GetBytes(OpaqueTokenSizeInBytes));
+
+        return new OpaqueToken(token, ComputeHash(token));
+    }
+
+    public string ComputeHash(string token) =>
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
 }

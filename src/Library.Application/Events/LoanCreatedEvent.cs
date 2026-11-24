@@ -6,4 +6,5 @@ public sealed record LoanCreatedEvent(
     string MemberName,
     string MemberEmail,
     string BookTitle,
-    DateTime DueDate) : IIntegrationEvent;
+    DateTime DueDate,
+    bool IsEbook = false) : IIntegrationEvent;

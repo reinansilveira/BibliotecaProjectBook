@@ -19,7 +19,8 @@ public static class CorsExtensions
             .WithOrigins(origins)
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .WithExposedHeaders("Retry-After")));
+            .AllowCredentials()
+            .WithExposedHeaders("Retry-After", "Content-Disposition", "api-supported-versions")));
 
         return services;
     }

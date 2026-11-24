@@ -1,4 +1,5 @@
 using FluentValidation;
+using Library.Application.Common.Validation;
 
 namespace Library.Application.Members;
 
@@ -12,6 +13,6 @@ public sealed class RegisterMemberRequestValidator : AbstractValidator<RegisterM
         RuleFor(member => member.BirthDate)
             .LessThan(_ => timeProvider.GetUtcNow().UtcDateTime)
             .WithMessage("Birth date must be in the past.");
-        RuleFor(member => member.Password).NotEmpty().MinimumLength(6).MaximumLength(100);
+        RuleFor(member => member.Password).ValidPassword();
     }
 }
