@@ -124,13 +124,8 @@ public static class DependencyInjection
 
         services.AddHttpClient<IEbookSource, GutenbergEbookSource>(client =>
         {
+            client.Timeout = GutenbergEbookSource.MirrorTimeout;
             client.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgent);
-        }).AddStandardResilienceHandler(options =>
-        {
-            options.Retry.MaxRetryAttempts = 1;
-            options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(60);
-            options.CircuitBreaker.SamplingDuration = TimeSpan.FromMinutes(2);
-            options.TotalRequestTimeout.Timeout = TimeSpan.FromMinutes(3);
         });
     }
 
