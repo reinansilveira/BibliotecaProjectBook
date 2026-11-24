@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    name: Build and test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up .NET (version from global.json)
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore Library.sln
+
+      - name: Check formatting
+        run: dotnet format whitespace Library.sln --verify-no-changes
+
+      - name: Build (warnings and style rules fail the build)
+        run: dotnet build Library.sln --configuration Release --no-restore
+
+      - name: Unit, architecture and integration tests (with coverage)
+        run: dotnet test --solution Library.sln --configuration Release --no-build --coverage --coverage-output-format cobertura
+
+      - name: Coverage report
+        if: always()
+        run: |
+          dotnet tool restore
+          dotnet reportgenerator "-reports:TestResults/*.cobertura.xml" "-targetdir:coverage-report" "-reporttypes:HtmlInline;MarkdownSummaryGithub" "-assemblyfilters:+Library.Domain;+Library.Application;+Library.Infrastructure;+Library.Api" "-classfilters:-Library.Infrastructure.Persistence.Migrations.*"
+          cat coverage-report/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage-report
+
+      - name: Build Docker image
+        run: docker build --tag library-api:${{ github.sha }} .

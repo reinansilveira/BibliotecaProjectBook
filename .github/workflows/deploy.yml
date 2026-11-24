@@ -1,0 +1,57 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to MonsterASP.NET
+    if: vars.API_URL != '' && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
+    runs-on: windows-latest
+    environment:
+      name: production
+      url: ${{ vars.API_URL }}/swagger
+
+    steps:
+      - name: Checkout the commit that passed CI
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Set up .NET (version from global.json)
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Publish for IIS
+        run: dotnet publish src/Library.Api/Library.Api.csproj --configuration Release --runtime win-x86 --self-contained false --output publish
+
+      - name: Deploy with Web Deploy
+        uses: rasmusbuchholdt/simply-web-deploy@2.1.0
+        with:
+          website-name: ${{ secrets.WEBSITE_NAME }}
+          server-computer-name: ${{ secrets.SERVER_COMPUTER_NAME }}
+          server-username: ${{ secrets.SERVER_USERNAME }}
+          server-password: ${{ secrets.SERVER_PASSWORD }}
+          source-path: \publish\
+
+      - name: Smoke test
+        shell: bash
+        run: |
+          for attempt in $(seq 1 30); do
+            curl -sf "${{ vars.API_URL }}/health" && exit 0
+            sleep 10
+          done
+          echo "The API did not become healthy after the deployment."
+          exit 1

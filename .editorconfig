@@ -1,0 +1,39 @@
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{json,yml,yaml,xml,csproj,props}]
+indent_size = 2
+
+[*.cs]
+csharp_style_namespace_declarations = file_scoped:warning
+csharp_prefer_braces = true:warning
+csharp_style_var_for_built_in_types = true:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+dotnet_style_allow_multiple_blank_lines_experimental = false:warning
+dotnet_style_allow_statement_immediately_after_block_experimental = false:warning
+csharp_style_allow_blank_lines_between_consecutive_braces_experimental = false:warning
+csharp_style_allow_embedded_statements_on_same_line_experimental = false:warning
+
+dotnet_diagnostic.IDE0005.severity = warning
+dotnet_diagnostic.IDE0011.severity = warning
+dotnet_diagnostic.IDE2000.severity = warning
+dotnet_diagnostic.IDE2001.severity = warning
+dotnet_diagnostic.IDE2002.severity = warning
+dotnet_diagnostic.IDE2003.severity = warning
+
+dotnet_diagnostic.RCS1003.severity = warning
+dotnet_diagnostic.RCS1037.severity = warning
+dotnet_diagnostic.RCS1208.severity = warning
+dotnet_diagnostic.RCS1211.severity = warning
+dotnet_diagnostic.RCS1238.severity = warning
+dotnet_diagnostic.RCS0063.severity = warning
+dotnet_diagnostic.RCS1194.severity = none
+
+[**/Migrations/*.cs]
+generated_code = true
