@@ -10,9 +10,14 @@ public static class IntegrationEventRegistry
     private static readonly Dictionary<Type, string> NamesByType = new()
     {
         [typeof(MemberRegisteredEvent)] = "member.registered",
+        [typeof(EmailConfirmationRequestedEvent)] = "member.email-confirmation-requested",
+        [typeof(PasswordResetRequestedEvent)] = "member.password-reset-requested",
         [typeof(LoanCreatedEvent)] = "loan.created",
         [typeof(LoanReturnedEvent)] = "loan.returned",
-        [typeof(MemberBlacklistedEvent)] = "member.blacklisted"
+        [typeof(LoanDueSoonEvent)] = "loan.due-soon",
+        [typeof(LoanOverdueEvent)] = "loan.overdue",
+        [typeof(ReservationReadyEvent)] = "reservation.ready",
+        [typeof(FineIssuedEvent)] = "fine.issued"
     };
 
     private static readonly Dictionary<string, Type> TypesByName = NamesByType.ToDictionary(pair => pair.Value, pair => pair.Key);

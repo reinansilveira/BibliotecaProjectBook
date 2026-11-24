@@ -19,9 +19,14 @@ public class NotificationServiceTests
     public static TheoryData<IIntegrationEvent, string, string> Events => new()
     {
         { new MemberRegisteredEvent(Guid.NewGuid(), "Ana", "ana@email.com"), "ana@email.com", "Welcome to the library" },
+        { new EmailConfirmationRequestedEvent(Guid.NewGuid(), "Ana", "ana@email.com", "https://x/confirm"), "ana@email.com", "Confirm your email" },
+        { new PasswordResetRequestedEvent(Guid.NewGuid(), "Ana", "ana@email.com", "https://x/reset"), "ana@email.com", "Reset your password" },
         { new LoanCreatedEvent(Guid.NewGuid(), Guid.NewGuid(), "Ana", "ana@email.com", "Dune", new DateTime(2026, 3, 8)), "ana@email.com", "Loan confirmed" },
         { new LoanReturnedEvent(Guid.NewGuid(), Guid.NewGuid(), "Ana", "ana@email.com", "Dune", new DateTime(2026, 3, 5), false), "ana@email.com", "Book returned" },
-        { new MemberBlacklistedEvent(Guid.NewGuid(), "Ana", "ana@email.com"), "ana@email.com", "Overdue loan" }
+        { new LoanDueSoonEvent(Guid.NewGuid(), Guid.NewGuid(), "Ana", "ana@email.com", "Dune", new DateTime(2026, 3, 8), false), "ana@email.com", "Your loan is due tomorrow" },
+        { new LoanOverdueEvent(Guid.NewGuid(), Guid.NewGuid(), "Ana", "ana@email.com", "Dune", new DateTime(2026, 3, 8), 0.5m, "USD"), "ana@email.com", "Overdue loan" },
+        { new ReservationReadyEvent(Guid.NewGuid(), Guid.NewGuid(), "Ana", "ana@email.com", "Dune", new DateTime(2026, 3, 10)), "ana@email.com", "Your reserved book is available" },
+        { new FineIssuedEvent(Guid.NewGuid(), Guid.NewGuid(), "Ana", "ana@email.com", "Dune", 3, 1.5m, "USD"), "ana@email.com", "Late return fine" }
     };
 
     [Theory]
@@ -44,5 +49,13 @@ public class NotificationServiceTests
         Assert.NotNull(message);
         Assert.Contains("Dune", message.Body);
         Assert.Contains("2026-03-08", message.Body);
+    }
+
+    [Fact]
+    public void Fine_email_shows_the_amount_with_the_currency()
+    {
+        var message = NotificationService.CreateMessage(new FineIssuedEvent(Guid.NewGuid(), Guid.NewGuid(), "Ana", "ana@email.com", "Dune", 3, 1.5m, "USD"));
+
+        Assert.Contains("USD 1.50", message!.Body);
     }
 }

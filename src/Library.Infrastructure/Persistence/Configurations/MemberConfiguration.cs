@@ -10,6 +10,7 @@ public sealed class MemberConfiguration : IEntityTypeConfiguration<Member>
     {
         builder.ToTable("Members");
         builder.HasKey(member => member.Id);
+        builder.Ignore(member => member.IsEmailConfirmed);
 
         builder.Property(member => member.Name).HasMaxLength(150).IsRequired();
         builder.Property(member => member.Phone).HasMaxLength(20).IsRequired();

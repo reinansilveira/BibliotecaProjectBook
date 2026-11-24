@@ -49,7 +49,7 @@ public class HostingConfigurationTests(LibraryApiFactory factory) : ApiTestBase(
 
     private static HttpRequestMessage Preflight(string origin)
     {
-        var request = new HttpRequestMessage(HttpMethod.Options, "/api/auth/login");
+        var request = new HttpRequestMessage(HttpMethod.Options, "/api/v1/auth/login");
         request.Headers.Add("Origin", origin);
         request.Headers.Add("Access-Control-Request-Method", "POST");
         request.Headers.Add("Access-Control-Request-Headers", "content-type,authorization");

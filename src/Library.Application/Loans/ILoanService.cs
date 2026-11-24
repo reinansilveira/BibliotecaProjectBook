@@ -11,4 +11,6 @@ public interface ILoanService
     Task<PagedResult<LoanResponse>> ListByMemberAsync(Guid memberId, PageRequest request, CancellationToken cancellationToken = default);
 
     Task<LoanResponse> ReturnAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<LoanResponse> RenewAsync(Guid id, CancellationToken cancellationToken = default);
 }

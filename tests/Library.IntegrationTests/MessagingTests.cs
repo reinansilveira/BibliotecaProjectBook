@@ -28,7 +28,7 @@ public class MessagingTests(LibraryApiFactory factory) : ApiTestBase(factory)
         var book = await CreateBookAsync(admin);
         var (member, _, client) = await RegisterAndSignInAsync();
 
-        var response = await client.PostAsJsonAsync("/api/loans", new CreateLoanRequest(book.Id, member.Id), Token);
+        var response = await client.PostAsJsonAsync("/api/v1/loans", new CreateLoanRequest(book.Id, member.Id), Token);
         response.EnsureSuccessStatusCode();
 
         var delivered = await Eventually.SatisfiesAsync(

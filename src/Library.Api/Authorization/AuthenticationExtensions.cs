@@ -1,3 +1,4 @@
+using Library.Application.Abstractions;
 using Library.Domain.Enums;
 using Library.Infrastructure.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -9,6 +10,8 @@ namespace Library.Api.Authorization;
 
 public static class AuthenticationExtensions
 {
+    public const string HubsPath = "/hubs";
+
     public static IServiceCollection AddJwtAuthentication(this IServiceCollection services)
     {
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
@@ -32,8 +35,11 @@ public static class AuthenticationExtensions
                     NameClaimType = ClaimNames.Name,
                     RoleClaimType = ClaimNames.Role
                 };
+                options.Events = new JwtBearerEvents { OnMessageReceived = ReadHubAccessToken };
             });
 
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
         services.AddSingleton<IAuthorizationHandler, ResourceOwnerOrAdminHandler>();
 
         services.AddAuthorizationBuilder()
@@ -43,5 +49,19 @@ public static class AuthenticationExtensions
             .AddPolicy(Policies.ResourceOwnerOrAdmin, policy => policy.AddRequirements(new ResourceOwnerOrAdminRequirement()));
 
         return services;
+    }
+
+    private static Task ReadHubAccessToken(MessageReceivedContext context)
+    {
+        var token = context.Request.Query["access_token"].ToString();
+
+        if (string.IsNullOrEmpty(token) || !context.HttpContext.Request.Path.StartsWithSegments(HubsPath))
+        {
+            return Task.CompletedTask;
+        }
+
+        context.Token = token;
+
+        return Task.CompletedTask;
     }
 }

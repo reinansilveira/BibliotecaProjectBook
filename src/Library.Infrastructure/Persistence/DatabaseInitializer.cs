@@ -1,6 +1,8 @@
 using Library.Application.Abstractions;
+using Library.Application.Common.Exceptions;
 using Library.Domain.Entities;
 using Library.Domain.Enums;
+using Library.Infrastructure.Seeding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,6 +20,13 @@ public static class DatabaseInitializer
 
         await context.Database.MigrateAsync();
         await SeedAdministratorAsync(context, provider, configuration);
+
+        if (!configuration.GetValue<bool>("Seed:DemoCatalog"))
+        {
+            return;
+        }
+
+        await SeedDemoCatalogAsync(context, provider);
     }
 
     private static async Task SeedAdministratorAsync(LibraryDbContext context, IServiceProvider provider, IConfiguration configuration)
@@ -38,6 +47,7 @@ public static class DatabaseInitializer
         var passwordHasher = provider.GetRequiredService<IPasswordHasher>();
         var now = provider.GetRequiredService<TimeProvider>().GetUtcNow().UtcDateTime;
         var admin = new Member("Administrator", new DateTime(1990, 1, 1), "0000000000", email, passwordHasher.Hash(password), now, Role.Admin);
+        admin.ConfirmEmail(now);
 
         context.Members.Add(admin);
 
@@ -45,7 +55,7 @@ public static class DatabaseInitializer
         {
             await context.SaveChangesAsync();
         }
-        catch (DbUpdateException)
+        catch (ConflictException)
         {
             if (await context.Members.AsNoTracking().AnyAsync(member => member.Email == email))
             {
@@ -55,8 +65,41 @@ public static class DatabaseInitializer
             throw;
         }
 
-        provider.GetRequiredService<ILoggerFactory>()
-            .CreateLogger(typeof(DatabaseInitializer))
-            .LogInformation("Initial administrator {Email} created.", email);
+        Logger(provider).LogInformation("Initial administrator {Email} created.", email);
     }
+
+    private static async Task SeedDemoCatalogAsync(LibraryDbContext context, IServiceProvider provider)
+    {
+        if (await context.Books.AnyAsync())
+        {
+            return;
+        }
+
+        var now = provider.GetRequiredService<TimeProvider>().GetUtcNow().UtcDateTime;
+
+        foreach (var demo in DemoCatalog.Books)
+        {
+            var book = new Book(
+                new BookDetails(demo.Title, demo.Author, demo.Description, demo.Genre, demo.Isbn, demo.PublishedYear, DemoCatalog.CoverUrl(demo.Isbn)),
+                now);
+
+            context.Books.Add(book);
+            context.BookCopies.AddRange(Enumerable.Range(1, demo.Copies)
+                .Select(number => new BookCopy(book.Id, $"DM-{demo.Isbn[^6..]}-{number:00}", now)));
+        }
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (ConflictException)
+        {
+            return;
+        }
+
+        Logger(provider).LogInformation("Demo catalog with {Count} books created.", DemoCatalog.Books.Count);
+    }
+
+    private static ILogger Logger(IServiceProvider provider) =>
+        provider.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(DatabaseInitializer));
 }

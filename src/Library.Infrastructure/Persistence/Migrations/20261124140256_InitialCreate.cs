@@ -8,7 +8,7 @@ namespace Library.Infrastructure.Persistence.Migrations
     /// <inheritdoc />
     public partial class InitialCreate : Migration
     {
-        private const string CreateMonthlyOverdueReportProcedure = """
+        internal const string CreateMonthlyOverdueReportProcedure = """
             CREATE OR ALTER PROCEDURE dbo.usp_GetMonthlyOverdueReport
                 @Year INT,
                 @Now  DATETIME2

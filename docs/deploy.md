@@ -19,6 +19,8 @@ flowchart LR
 
 RabbitMQ is not part of the free setup, so `Messaging__Enabled` is `false` in the cloud: events are still written to the outbox table, and no email is sent. To enable it, point `RabbitMq__*` to a hosted broker such as CloudAMQP and set `Messaging__Enabled` to `true`.
 
+In-app notifications and the SignalR push keep working without the broker. The shared SQL Server usually has no full-text search, and the API detects it and searches with `LIKE` instead.
+
 ## 1. Create the website and the database
 
 1. Create a free account at https://www.monsterasp.net (no credit card).
@@ -41,6 +43,9 @@ In the website, open **Scripting → Environment variables**, add the values bel
 | `Swagger__Enabled` | `true`, so the API can be explored from the portfolio link |
 | `Messaging__Enabled` | `false` |
 | `Cors__AllowedOrigins__0` | `https://<your-user>.github.io` |
+| `Account__FrontEndUrl` | `https://<your-user>.github.io/library-web`, used in the confirmation and reset links |
+| `Seed__DemoCatalog` | `true` to start with 18 classic books and their covers |
+| `Seed__DemoEbooks` | `true` to download their public-domain EPUBs from Project Gutenberg in the background |
 
 A random key can be generated with PowerShell:
 

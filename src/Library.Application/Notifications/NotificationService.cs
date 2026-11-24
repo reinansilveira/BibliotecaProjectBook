@@ -1,3 +1,4 @@
+using System.Globalization;
 using Library.Application.Abstractions;
 using Library.Application.Events;
 using Microsoft.Extensions.Logging;
@@ -34,18 +35,44 @@ public sealed class NotificationService : INotificationService
             registered.Email,
             "Welcome to the library",
             $"Hi {registered.Name}, your library account was created successfully."),
+        EmailConfirmationRequestedEvent confirmation => new EmailMessage(
+            confirmation.Email,
+            "Confirm your email",
+            $"Hi {confirmation.Name}, confirm your email address by opening this link: {confirmation.Link}"),
+        PasswordResetRequestedEvent reset => new EmailMessage(
+            reset.Email,
+            "Reset your password",
+            $"Hi {reset.Name}, open this link to choose a new password: {reset.Link}. If you did not ask for it, ignore this email."),
         LoanCreatedEvent created => new EmailMessage(
             created.MemberEmail,
             "Loan confirmed",
-            $"Hi {created.MemberName}, you borrowed \"{created.BookTitle}\". Please return it by {created.DueDate:yyyy-MM-dd}."),
+            created.IsEbook
+                ? $"Hi {created.MemberName}, the e-book \"{created.BookTitle}\" is ready to read until {Date(created.DueDate)}."
+                : $"Hi {created.MemberName}, you borrowed \"{created.BookTitle}\". Please return it by {Date(created.DueDate)}."),
         LoanReturnedEvent returned => new EmailMessage(
             returned.MemberEmail,
             "Book returned",
-            $"Hi {returned.MemberName}, we received \"{returned.BookTitle}\" on {returned.ReturnedAt:yyyy-MM-dd}. Thank you!"),
-        MemberBlacklistedEvent blacklisted => new EmailMessage(
-            blacklisted.MemberEmail,
+            $"Hi {returned.MemberName}, we received \"{returned.BookTitle}\" on {Date(returned.ReturnedAt)}. Thank you!"),
+        LoanDueSoonEvent dueSoon => new EmailMessage(
+            dueSoon.MemberEmail,
+            dueSoon.IsEbook ? "Your e-book loan ends tomorrow" : "Your loan is due tomorrow",
+            $"Hi {dueSoon.MemberName}, \"{dueSoon.BookTitle}\" is due on {Date(dueSoon.DueDate)}."),
+        LoanOverdueEvent overdue => new EmailMessage(
+            overdue.MemberEmail,
             "Overdue loan",
-            $"Hi {blacklisted.MemberName}, you have an overdue loan. New loans are blocked until the book is returned."),
+            $"Hi {overdue.MemberName}, \"{overdue.BookTitle}\" was due on {Date(overdue.DueDate)}. A fine of {Money(overdue.DailyRate, overdue.Currency)} per day applies, and new loans are blocked until the book is returned."),
+        ReservationReadyEvent ready => new EmailMessage(
+            ready.MemberEmail,
+            "Your reserved book is available",
+            $"Hi {ready.MemberName}, \"{ready.BookTitle}\" is waiting for you until {ready.ExpiresAt.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture)} UTC."),
+        FineIssuedEvent fine => new EmailMessage(
+            fine.MemberEmail,
+            "Late return fine",
+            $"Hi {fine.MemberName}, \"{fine.BookTitle}\" was returned {fine.DaysOverdue} day(s) late. A fine of {Money(fine.Amount, fine.Currency)} was issued."),
         _ => null
     };
+
+    private static string Date(DateTime value) => value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+    private static string Money(decimal amount, string currency) => $"{currency} {amount.ToString("0.00", CultureInfo.InvariantCulture)}";
 }

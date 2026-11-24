@@ -1,3 +1,4 @@
+using Library.Application.Account;
 using Library.Application.Books;
 using Library.Application.Members;
 using Library.Application.Reports;
@@ -44,11 +45,54 @@ public class ValidatorTests
     }
 
     [Fact]
-    public void Book_without_title_or_author_is_invalid()
+    public void Book_without_title_author_or_genre_is_invalid()
     {
-        var result = new BookRequestValidator().Validate(new BookRequest("", "", "Description"));
+        var result = new BookRequestValidator().Validate(new BookRequest { Description = "Description" });
 
-        Assert.Equal(2, result.Errors.Count);
+        Assert.Equal(3, result.Errors.Count);
+    }
+
+    [Theory]
+    [InlineData("9780141439519", "Isbn")]
+    [InlineData("ftp://covers/book.jpg", "CoverUrl")]
+    public void Book_with_a_bad_isbn_or_cover_is_invalid(string value, string field)
+    {
+        var request = new BookRequest
+        {
+            Title = "Emma",
+            Author = "Jane Austen",
+            Genre = "Romance",
+            Isbn = field == "Isbn" ? value : null,
+            CoverUrl = field == "CoverUrl" ? value : null
+        };
+
+        var result = new BookRequestValidator().Validate(request);
+
+        Assert.Contains(result.Errors, error => error.PropertyName == field);
+    }
+
+    [Fact]
+    public void New_book_copies_are_limited()
+    {
+        var result = new CreateBookRequestValidator().Validate(new CreateBookRequest { Title = "Emma", Author = "Austen", Genre = "Romance", Copies = 51 });
+
+        Assert.Contains(result.Errors, error => error.PropertyName == nameof(CreateBookRequest.Copies));
+    }
+
+    [Fact]
+    public void Search_with_years_out_of_order_is_invalid()
+    {
+        var result = new BookSearchRequestValidator().Validate(new BookSearchRequest { YearFrom = 1900, YearTo = 1800 });
+
+        Assert.False(result.IsValid);
+    }
+
+    [Fact]
+    public void New_password_must_differ_from_the_current_one()
+    {
+        var result = new ChangePasswordRequestValidator().Validate(new ChangePasswordRequest("Same@123", "Same@123"));
+
+        Assert.False(result.IsValid);
     }
 
     [Fact]

@@ -22,11 +22,11 @@ public class RateLimitingTests(LibraryApiFactory factory) : ApiTestBase(factory)
 
         for (var attempt = 0; attempt < PermitLimit; attempt++)
         {
-            var allowed = await client.PostAsJsonAsync("/api/auth/login", credentials, Token);
+            var allowed = await client.PostAsJsonAsync("/api/v1/auth/login", credentials, Token);
             Assert.Equal(HttpStatusCode.Unauthorized, allowed.StatusCode);
         }
 
-        var blocked = await client.PostAsJsonAsync("/api/auth/login", credentials, Token);
+        var blocked = await client.PostAsJsonAsync("/api/v1/auth/login", credentials, Token);
 
         Assert.Equal(HttpStatusCode.TooManyRequests, blocked.StatusCode);
         Assert.NotNull(blocked.Headers.RetryAfter);
@@ -42,7 +42,7 @@ public class RateLimitingTests(LibraryApiFactory factory) : ApiTestBase(factory)
 
         for (var request = 0; request < PermitLimit * 3; request++)
         {
-            var response = await client.GetAsync("/api/books", Token);
+            var response = await client.GetAsync("/api/v1/books", Token);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
     }

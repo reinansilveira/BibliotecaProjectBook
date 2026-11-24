@@ -9,5 +9,7 @@ public interface ITokenService
 
     GeneratedRefreshToken GenerateRefreshToken();
 
-    string ComputeHash(string refreshToken);
+    OpaqueToken GenerateOpaqueToken();
+
+    string ComputeHash(string token);
 }
