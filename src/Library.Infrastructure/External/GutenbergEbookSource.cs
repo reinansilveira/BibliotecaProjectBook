@@ -13,6 +13,8 @@ public sealed class GutenbergEbookSource : IEbookSource
         new("https://gutenberg.pglaf.org/")
     ];
 
+    public static readonly TimeSpan MirrorTimeout = TimeSpan.FromMinutes(2);
+
     private const int BufferSize = 81920;
 
     private readonly HttpClient _httpClient;
@@ -59,13 +61,16 @@ public sealed class GutenbergEbookSource : IEbookSource
 
             return await ReadLimitedAsync(response.Content, cancellationToken);
         }
-        catch (HttpRequestException exception) when (exception.StatusCode is null or >= HttpStatusCode.InternalServerError)
+        catch (Exception exception) when (IsUnavailable(exception) && !cancellationToken.IsCancellationRequested)
         {
             _logger.LogWarning(exception, "Could not reach {Address}.", address);
 
             return null;
         }
     }
+
+    private static bool IsUnavailable(Exception exception) =>
+        exception is TaskCanceledException or HttpRequestException { StatusCode: null or >= HttpStatusCode.InternalServerError };
 
     private static async Task<byte[]> ReadLimitedAsync(HttpContent content, CancellationToken cancellationToken)
     {
