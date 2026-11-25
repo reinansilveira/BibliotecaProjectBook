@@ -131,6 +131,44 @@ public class CatalogInfrastructureTests
         Assert.Equal(2, calls);
     }
 
+    [Fact]
+    public async Task Gutenberg_download_uses_the_mirror_and_a_smaller_edition_when_needed()
+    {
+        var small = new byte[] { 0x50, 0x4B, 0x03, 0x04, 9 };
+        var requested = new List<string>();
+        var handler = new RoutingHandler(request =>
+        {
+            requested.Add(request.RequestUri!.ToString());
+
+            if (request.RequestUri.Host == "www.gutenberg.org")
+            {
+                return new HttpResponseMessage(HttpStatusCode.ServiceUnavailable);
+            }
+
+            if (request.RequestUri.AbsolutePath.EndsWith("-images-3.epub", StringComparison.Ordinal))
+            {
+                var huge = new ByteArrayContent([1]);
+                huge.Headers.ContentLength = 50L * 1024 * 1024;
+
+                return new HttpResponseMessage(HttpStatusCode.OK) { Content = huge };
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(small) };
+        });
+        var source = new GutenbergEbookSource(new HttpClient(handler), NullLogger<GutenbergEbookSource>.Instance);
+
+        var content = await source.DownloadGutenbergEpubAsync(120, Token);
+
+        Assert.Equal(small, content);
+        Assert.Equal("https://gutenberg.pglaf.org/cache/epub/120/pg120.epub", requested[^1]);
+    }
+
+    private sealed class RoutingHandler(Func<HttpRequestMessage, HttpResponseMessage> respond) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+            Task.FromResult(respond(request));
+    }
+
     private sealed class StubHandler(Func<string, string?> respond) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)

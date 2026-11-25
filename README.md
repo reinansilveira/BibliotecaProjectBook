@@ -4,7 +4,7 @@
 ![.NET 10](https://img.shields.io/badge/.NET-10%20LTS-512BD4)
 ![SQL Server](https://img.shields.io/badge/SQL%20Server-2022-CC2927)
 ![RabbitMQ](https://img.shields.io/badge/RabbitMQ-4-FF6600)
-![Tests](https://img.shields.io/badge/tests-287%20passing-2ea44f)
+![Tests](https://img.shields.io/badge/tests-288%20passing-2ea44f)
 ![Coverage](https://img.shields.io/badge/coverage-89%25-2ea44f)
 
 A REST API for a real-world library: a catalog with **printed copies and e-books**, loans, **waiting lists**, **late fines**, **reviews**, **real-time notifications** and an admin area with dashboards, audit trail and CSV exports. Every important event is published to **RabbitMQ** through a **transactional outbox**, and traces, metrics and logs go to **OpenTelemetry**.
@@ -28,7 +28,7 @@ The Angular front end lives in a separate repository: **Library Web** (Angular 2
 | **Integrations** | Book data and covers from **Open Library** by ISBN, public-domain EPUBs from **Project Gutenberg** (with a mirror fallback), resilient HTTP clients with retries, timeouts and circuit breaker |
 | **Observability** | **OpenTelemetry** traces and metrics (ASP.NET Core, HttpClient, SQL, RabbitMQ) and Serilog logs in the **.NET Aspire dashboard**, `/health`, automatic **audit trail** of every change through an EF Core interceptor |
 | **Errors** | RFC 9457 `ProblemDetails` from a single global exception handler (400/401/403/404/409/422/429) |
-| **Quality** | 287 automated tests (unit, architecture, integration with real SQL Server and RabbitMQ) with **89% line coverage**, k6 load test, Roslynator + `.editorconfig` rules that fail the build, Dependabot |
+| **Quality** | 288 automated tests (unit, architecture, integration with real SQL Server and RabbitMQ) with **89% line coverage**, k6 load test, Roslynator + `.editorconfig` rules that fail the build, Dependabot |
 | **Delivery** | Docker Compose (API, SQL Server with full-text, RabbitMQ, Aspire dashboard), GitHub Actions CI and **CD** to free hosting (MonsterASP.NET for the API and database, GitHub Pages for the front end) with a smoke test on `/health` |
 
 ## Business rules
@@ -193,7 +193,7 @@ dotnet test                 # unit, architecture and integration tests (Docker m
 
 | Type | Count | What it covers |
 |---|---|---|
-| Unit | 216 | Domain rules (loans, reservations, fines, reviews, tokens), every service, validators, ISBN check digits, CSV escaping, e-book file checks, signed links, cache, Open Library mapping, JWT, hashing, outbox |
+| Unit | 217 | Domain rules (loans, reservations, fines, reviews, tokens), every service, validators, ISBN check digits, CSV escaping, e-book file checks, signed links, cache, Open Library mapping, JWT, hashing, outbox |
 | Architecture | 12 | Layer dependencies and conventions |
 | Integration | 59 | Real HTTP and SignalR calls against **SQL Server (with full-text) and RabbitMQ containers**: waiting list with holds, fines and payment, renewals, the race for the last copy, e-book upload, signed download with ranges and expiry, reading progress, full-text search, filters, ISBN import, reviews, wishlist, also-read, real-time notifications, audit trail, email confirmation and password reset through RabbitMQ, dashboard and CSV, versioning, the Dapper report and the stored procedure |
 | Load | k6 | Catalog browsing and member sessions with latency and error thresholds |

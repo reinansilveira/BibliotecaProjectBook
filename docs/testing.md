@@ -19,7 +19,7 @@ Run a single suite:
 dotnet test --project tests/Library.UnitTests
 ```
 
-## Unit tests (216)
+## Unit tests (217)
 
 - **Domain**: printed and e-book loan periods, overdue and expiry rules, rounding of days overdue, renewals, reading progress, reservation states and hold expiry, fine amounts and settlement, review ratings, single-use tokens, e-book licenses, email confirmation.
 - **Services**: borrowing inside a book lock, free capacity with ready holds, a ready reservation taking the held copy, standing (overdue loans, unpaid fines, loan limit), late returns issuing fines, returns promoting the next member, renewals blocked by a waiting list, reservation rules, fines, reviews and rating refresh, password reset and email confirmation links, ISBN import, e-book upload and Gutenberg import, maintenance (expirations, holds, reminders, notices), wishlist, catalog cache usage.
