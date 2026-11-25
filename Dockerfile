@@ -11,7 +11,7 @@ RUN dotnet restore src/Library.Api/Library.Api.csproj
 COPY src/ src/
 RUN dotnet publish src/Library.Api/Library.Api.csproj -c Release -o /app/publish --no-restore
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:11.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
 USER $APP_UID
