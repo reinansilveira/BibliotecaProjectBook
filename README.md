@@ -7,6 +7,8 @@
 ![Tests](https://img.shields.io/badge/tests-288%20passing-2ea44f)
 ![Coverage](https://img.shields.io/badge/coverage-89%25-2ea44f)
 
+**Live demo:** [web app](https://reinansilveira.github.io/BibliotecaProjectBook-Web/) · [API (Swagger)](https://reinan-library-api.runasp.net/swagger) · [health](https://reinan-library-api.runasp.net/health)
+
 A REST API for a real-world library: a catalog with **printed copies and e-books**, loans, **waiting lists**, **late fines**, **reviews**, **real-time notifications** and an admin area with dashboards, audit trail and CSV exports. Every important event is published to **RabbitMQ** through a **transactional outbox**, and traces, metrics and logs go to **OpenTelemetry**.
 
 The Angular front end lives in a separate repository: **Library Web** (Angular 22, Angular Material, Playwright).
