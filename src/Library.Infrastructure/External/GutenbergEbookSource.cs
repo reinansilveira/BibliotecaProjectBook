@@ -28,8 +28,8 @@ public sealed class GutenbergEbookSource : IEbookSource
 
     public static IEnumerable<string> FileNames(int gutenbergId) =>
     [
-        $"cache/epub/{gutenbergId}/pg{gutenbergId}-images-3.epub",
-        $"cache/epub/{gutenbergId}/pg{gutenbergId}.epub"
+        $"cache/epub/{gutenbergId}/pg{gutenbergId}.epub",
+        $"cache/epub/{gutenbergId}/pg{gutenbergId}-images-3.epub"
     ];
 
     public async Task<byte[]> DownloadGutenbergEpubAsync(int gutenbergId, CancellationToken cancellationToken = default)
@@ -57,9 +57,12 @@ public sealed class GutenbergEbookSource : IEbookSource
 
     private async Task<Download> TryDownloadAsync(Uri address, CancellationToken cancellationToken)
     {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(MirrorTimeout);
+
         try
         {
-            using var response = await _httpClient.GetAsync(address, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            using var response = await _httpClient.GetAsync(address, HttpCompletionOption.ResponseHeadersRead, timeout.Token);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -75,7 +78,7 @@ public sealed class GutenbergEbookSource : IEbookSource
                 return Download.Oversized;
             }
 
-            var content = await ReadLimitedAsync(response.Content, cancellationToken);
+            var content = await ReadLimitedAsync(response.Content, timeout.Token);
 
             return content is null ? Download.Oversized : new Download(content, false);
         }
@@ -88,7 +91,7 @@ public sealed class GutenbergEbookSource : IEbookSource
     }
 
     private static bool IsUnavailable(Exception exception) =>
-        exception is TaskCanceledException or HttpRequestException { StatusCode: null or >= HttpStatusCode.InternalServerError };
+        exception is OperationCanceledException or HttpRequestException { StatusCode: null or >= HttpStatusCode.InternalServerError };
 
     private static async Task<byte[]?> ReadLimitedAsync(HttpContent content, CancellationToken cancellationToken)
     {

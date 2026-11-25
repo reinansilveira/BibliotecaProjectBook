@@ -132,7 +132,7 @@ public class CatalogInfrastructureTests
     }
 
     [Fact]
-    public async Task Gutenberg_download_uses_the_mirror_and_a_smaller_edition_when_needed()
+    public async Task Gutenberg_download_prefers_the_light_edition_and_falls_back_to_the_mirror()
     {
         var small = new byte[] { 0x50, 0x4B, 0x03, 0x04, 9 };
         var requested = new List<string>();
