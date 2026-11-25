@@ -26,22 +26,36 @@ public sealed class GutenbergEbookSource : IEbookSource
         _logger = logger;
     }
 
+    public static IEnumerable<string> FileNames(int gutenbergId) =>
+    [
+        $"cache/epub/{gutenbergId}/pg{gutenbergId}-images-3.epub",
+        $"cache/epub/{gutenbergId}/pg{gutenbergId}.epub"
+    ];
+
     public async Task<byte[]> DownloadGutenbergEpubAsync(int gutenbergId, CancellationToken cancellationToken = default)
     {
-        foreach (var mirror in Mirrors)
+        foreach (var fileName in FileNames(gutenbergId))
         {
-            var content = await TryDownloadAsync(new Uri(mirror, $"cache/epub/{gutenbergId}/pg{gutenbergId}-images-3.epub"), cancellationToken);
-
-            if (content is not null)
+            foreach (var mirror in Mirrors)
             {
-                return content;
+                var download = await TryDownloadAsync(new Uri(mirror, fileName), cancellationToken);
+
+                if (download.Content is not null)
+                {
+                    return download.Content;
+                }
+
+                if (download.TooLarge)
+                {
+                    break;
+                }
             }
         }
 
-        throw new DomainException($"Project Gutenberg has no EPUB for book {gutenbergId}, or it is unavailable right now.");
+        throw new DomainException($"Project Gutenberg has no EPUB under {EbookFiles.MaxSizeInBytes / (1024 * 1024)} MB for book {gutenbergId}, or it is unavailable right now.");
     }
 
-    private async Task<byte[]?> TryDownloadAsync(Uri address, CancellationToken cancellationToken)
+    private async Task<Download> TryDownloadAsync(Uri address, CancellationToken cancellationToken)
     {
         try
         {
@@ -51,28 +65,32 @@ public sealed class GutenbergEbookSource : IEbookSource
             {
                 _logger.LogWarning("Project Gutenberg answered {StatusCode} for {Address}.", (int)response.StatusCode, address);
 
-                return null;
+                return Download.Failed;
             }
 
             if (response.Content.Headers.ContentLength > EbookFiles.MaxSizeInBytes)
             {
-                throw new DomainException("The e-book is larger than the allowed size.");
+                _logger.LogInformation("{Address} is larger than the allowed size; trying a smaller edition.", address);
+
+                return Download.Oversized;
             }
 
-            return await ReadLimitedAsync(response.Content, cancellationToken);
+            var content = await ReadLimitedAsync(response.Content, cancellationToken);
+
+            return content is null ? Download.Oversized : new Download(content, false);
         }
         catch (Exception exception) when (IsUnavailable(exception) && !cancellationToken.IsCancellationRequested)
         {
             _logger.LogWarning(exception, "Could not reach {Address}.", address);
 
-            return null;
+            return Download.Failed;
         }
     }
 
     private static bool IsUnavailable(Exception exception) =>
         exception is TaskCanceledException or HttpRequestException { StatusCode: null or >= HttpStatusCode.InternalServerError };
 
-    private static async Task<byte[]> ReadLimitedAsync(HttpContent content, CancellationToken cancellationToken)
+    private static async Task<byte[]?> ReadLimitedAsync(HttpContent content, CancellationToken cancellationToken)
     {
         await using var stream = await content.ReadAsStreamAsync(cancellationToken);
         using var buffer = new MemoryStream();
@@ -83,12 +101,19 @@ public sealed class GutenbergEbookSource : IEbookSource
         {
             if (buffer.Length + read > EbookFiles.MaxSizeInBytes)
             {
-                throw new DomainException("The e-book is larger than the allowed size.");
+                return null;
             }
 
             await buffer.WriteAsync(chunk.AsMemory(0, read), cancellationToken);
         }
 
         return buffer.ToArray();
+    }
+
+    private sealed record Download(byte[]? Content, bool TooLarge)
+    {
+        public static readonly Download Failed = new(null, false);
+
+        public static readonly Download Oversized = new(null, true);
     }
 }
