@@ -1,17 +1,76 @@
-version: '3.8'  # Versão do Docker Compose
+services:
+  sqlserver:
+    build: docker/sqlserver
+    image: library-sqlserver-fts
+    container_name: library-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${SQLSERVER_SA_PASSWORD:-Library@Dev123}
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -b -Q \"IF EXISTS (SELECT 1 FROM sys.databases WHERE state_desc <> 'ONLINE') RAISERROR('Database recovering', 16, 1)\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
 
-services:       # Definição dos serviços
-  app:          # Nome do serviço
-    image: myapp:latest  # Imagem Docker a ser utilizada
-    build:       # Diretório para construir a imagem
-      context: .
-    ports:       # Mapeamento de portas
-      - "8080:80"
-    environment:  # Variáveis de ambiente
-      - ENV=production
-    volumes:      # Montagem de volumes
-      - ./app:/usr/src/app
- # Persistência de dados
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: library-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-library}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-library-dev}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
 
-volumes:        # Definição de volumes
-  db_data:      # Nome do volume
+  api:
+    build: .
+    container_name: library-api
+    restart: on-failure
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      aspire-dashboard:
+        condition: service_started
+    ports:
+      - "5080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Database: "Server=sqlserver,1433;Database=Library;User Id=sa;Password=${SQLSERVER_SA_PASSWORD:-Library@Dev123};TrustServerCertificate=True"
+      Database__ApplyMigrationsOnStartup: "true"
+      RateLimiting__AuthenticationPermitLimit: ${AUTH_RATE_LIMIT:-10}
+      Jwt__Key: ${JWT_KEY:-local-development-key-do-not-use-in-production-0123456789}
+      Seed__Admin__Email: ${ADMIN_EMAIL:-admin@library.local}
+      Seed__Admin__Password: ${ADMIN_PASSWORD:-Admin@123}
+      RabbitMq__HostName: rabbitmq
+      RabbitMq__UserName: ${RABBITMQ_USER:-library}
+      RabbitMq__Password: ${RABBITMQ_PASSWORD:-library-dev}
+      SendGrid__ApiKey: ${SENDGRID_API_KEY:-}
+      SendGrid__FromEmail: ${SENDGRID_FROM_EMAIL:-}
+      Seed__DemoCatalog: "true"
+      Seed__DemoEbooks: ${DEMO_EBOOKS:-true}
+      Account__FrontEndUrl: ${FRONT_END_URL:-http://localhost:4200}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://aspire-dashboard:18889
+
+  aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:9.5
+    container_name: library-aspire-dashboard
+    environment:
+      DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS: "true"
+    ports:
+      - "18888:18888"
+
+volumes:
+  sqlserver-data:
