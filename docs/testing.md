@@ -84,9 +84,9 @@ Latest local result (Docker Desktop on a developer laptop):
 
 | Metric | Result |
 |---|---|
-| Requests | 3,435 |
-| Failed requests | 0.00% |
-| Catalog p95 | 29 ms |
-| Member flow p95 | 205 ms |
+| Requests | 3,469 |
+| Failed requests | 0.11% (one SQL client timeout on a login; the other three failures were the same virtual user calling `me` and `refresh` without a token) |
+| Catalog p95 | 11 ms (HybridCache) |
+| Member flow p95 | 199 ms |
 
 The member flow is slower on purpose: PBKDF2 with 100,000 iterations makes password checks expensive to resist brute force.
