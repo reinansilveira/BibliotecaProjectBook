@@ -50,7 +50,7 @@ In the website, open **Scripting → Environment variables**, add the values bel
 A random key can be generated with PowerShell:
 
 ```powershell
-[Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(48))
+$b = New-Object byte[] 48; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); [Convert]::ToBase64String($b)
 ```
 
 The secrets live only on the host. GitHub never sees them.
